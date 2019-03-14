@@ -19,7 +19,7 @@ connection.connect(function(err){
  var makeTable = function(){
      connection.query("Select * FROM products", function(err, res){
          for (var i=0; i<res.length; i++){
-             console.log(res[i].item_id+" || "+res[i].product_name+" || "+res[i].department_name+" || "+res[i].price+" || "+res[i].stock_quantity+"\n");
+             console.log(res[i].item_id+" || "+res[i].product_name+" || "+res[i].department_name+" || "+res[i].price+" || "+res[i].stockquantity+"\n");
          }
          promptCustomer(res);
      })
@@ -32,8 +32,11 @@ connection.connect(function(err){
          message: "What would you like to buy? [quit with Q]"
      }]).then (function(answer){
          var correct = false;
+         if(answer.choice.toUpperCase()=="Q"){
+             process.exit();
+         }
          for (var i=0; i <res.length; i++){
-             if(rest[i].product_name==answer.choice){
+             if(res[i].product_name==answer.choice){
                  correct=true;
                  var product=answer.choice;
                  var id=i;
@@ -48,9 +51,23 @@ connection.connect(function(err){
                              return false;
                          }
                      }
-                 }).then(function(answer))
+                 }).then(function(answer){
+                     if ((res[id].stockquantity-answer.quant)>0){
+                         connection.query("UPDATE products SET stockquantity='"+(res[id].stockquantity-answer.quant)+"'WHERE product_name='"+product+"'", function(err, res2){
+                             console.log("Product Bought!");
+                             makeTable();
+                         })
+                     }  else{
+                         console.log("Not a valid product selection!");
+                         promptCustomer(res);
+                     }
+                 })
                  
              }
+         }
+         if(i==res.length && correct==false){
+             console.log("Not a valid product selection!");
+             promptCustomer(res);
          }
      })
  }
